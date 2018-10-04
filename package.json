@@ -1,0 +1,20 @@
+{
+  "name": "satra",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "chai": "^4.2.0",
+    "chai-http": "^4.2.0",
+    "cookie-signature": "^1.1.0",
+    "hyperid": "^1.4.1",
+    "jasmine": "^3.2.0",
+    "muneem": "file:../../muneem"
+  }
+}

@@ -1,20 +1,33 @@
 {
-  "name": "satra",
+  "name": "satr",
   "version": "1.0.0",
-  "description": "",
+  "description": "A session management plugin for Muneem web framework. It also covers authentication flow.",
   "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "session",
+    "muneem"
+  ],
+  "author": "Amit Gupta (http://amitkumargupta.work)",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/node-muneem/satr.git"
+  },
+  "bugs": {
+    "url": "https://github.com/node-muneem/satr/issues"
+  },
+  "homepage": "https://github.com/node-muneem/satr",
   "dependencies": {
-    "chai": "^4.2.0",
-    "chai-http": "^4.2.0",
     "cookie-signature": "^1.1.0",
     "hyperid": "^1.4.1",
-    "jasmine": "^3.2.0",
-    "muneem": "file:../../muneem"
+    "muneem": "^2.3.2"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "chai-http": "^4.2.0",
+    "jasmine": "^3.2.0"
   }
 }

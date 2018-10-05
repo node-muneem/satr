@@ -131,3 +131,7 @@ If *autoCreate* option is set to *true*, this plugin will create session for eac
 
 * [Session_Management_Cheat_Sheet](https://www.owasp.org/index.php/Session_Management_Cheat_Sheet)
 * [Cookies in RESTful webservices](https://softwareengineering.stackexchange.com/questions/141019/should-cookies-be-used-in-a-restful-api#141434)
+
+## TODO
+
+* *x-forwarded-proto* header

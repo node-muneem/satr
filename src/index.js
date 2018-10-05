@@ -23,9 +23,6 @@ function SessionManager(options){
       sessionId = asked.headers[ options.name ];
     }
     
-    
-    //A session-id is not expected once it's cookie has been expired.
-    //So the expiry time for auth session cookies should be longer.
     let session = {};
     if( sessionId ){
       //decrypt it
@@ -35,18 +32,22 @@ function SessionManager(options){
         options.store.get(decryptedSessionId, (err, sessionFromStore) => {
           if(err){
             throw Error(err);
-          }else if( shouldRenew(sessionFromStore, options.renewalDuration) ){
-            //delete previous session
-            options.store.destroy(sessionFromStore.id, err=> {
-              if(err) throw Error(err);
-              //just change the session-id
-              sessionFromStore.id = generateSessionId();
-              sessionFromStore.birthTime = Date.now();
+          }else if( sessionFromStore){
+            if( shouldRenew(sessionFromStore, options.renewalDuration) ){
+              //delete previous session
+              options.store.destroy(sessionFromStore.id, err=> {
+                if(err) throw Error(err);
+                //just change the session-id and birth time to renew it
+                sessionFromStore.id = generateSessionId();
+                sessionFromStore.birthTime = Date.now();
+                session = sessionFromStore;
+                eventEmitter.emit("renew", session, asked);
+              });
+            }else{//continue with previous session
               session = sessionFromStore;
-              eventEmitter.emit("renew", session, asked);
-            });
-          }else{//continue with previous session
-            session = sessionFromStore;
+            }
+          }else{ //session detail is not present in store
+            session = createSession(asked);  
           }
         }); //End of get session detail from store
       } else {
@@ -83,11 +84,9 @@ const defaultOptions = {
   name : "_si",
   autoCreate : true, //create the session for each request automatically
   //secret : "It is required", //32 or more char long
-  life: 3600, //in seconds
-  expiresAt : function(){
-    return Date.now() + 3600000
-  }
+  life: 3600000, //in milli-seconds = 1 day
 }
+
 const defaultCookieOptions = {
     path : "/",
     // should not be accessed by client-side APIs
@@ -110,19 +109,17 @@ function buildOptions(userOptions){
   options.secret = userOptions.secret;
   options.name = userOptions.name || defaultOptions.name;
   options.autoCreate = pickDefined(userOptions, defaultOptions, "autoCreate" );
-  options.life = (userOptions.life || defaultOptions.life ) * 1000;
-  options.renewalDuration = ( userOptions.renewalDuration || defaultOptions.renewalDuration ) * 1000;
+  options.life = (userOptions.life * 1000) || defaultOptions.life;
+  options.renewalDuration = ( userOptions.renewalDuration * 1000) || 1;
   if(!userOptions.store){
-    /* if( devEnvList.indexOf(env) === -1){
+    if( devEnvList.indexOf(env) === -1){
       throw Error("You're storing sessions in memory in non-dev environment.");
-    }else{ */
-      
+    }else{
       options.store = new Store();
-    //}
+    }
   }else{
     options.store = userOptions.store;
   }
-  //options.cookie = buildCookieAttributes(userOptions.cookie || {});
   return options;
 }
 
@@ -131,7 +128,7 @@ function buildCookieAttributes (options) {
   return {
     path: options.path || defaultCookieOptions.path,
     httpOnly: pickDefined(options, defaultCookieOptions, "httpOnly"),
-    secure: options.secure || defaultCookieOptions.secure, 
+    secure: pickDefined(options, defaultCookieOptions, "secure"), 
     sameSite: options.sameSite || defaultCookieOptions.sameSite, 
     domain: options.domain || defaultCookieOptions.domain,
     /*
@@ -145,21 +142,13 @@ function buildCookieAttributes (options) {
 }
 
 /**
- * 
+ * When session expiry is just renewalDuration far from the current time 
  * @param {object} session 
  */
-function shouldRenew(session, renealDuration){
-  return (session.birthTime + session.life - renealDuration ) >=  Date.now();
-}
-/* 
-function getExpiryDate(life){
-  return new Date( getExpiryTime(life) );
+function shouldRenew(session, renewalDuration){
+  return (session.birthTime + session.life - renewalDuration ) <  Date.now();
 }
 
-function getExpiryTime(life){
-  return Date.now() + life;
-}
- */
 function pickDefined(L, R, P){
   return L[P] !== undefined ? L[P] : R[P];
 }
@@ -172,19 +161,16 @@ plugin.prototype.on = function(evenName, fn){
 }
 
 plugin.prototype.manager = function(muneem, options){
-  
-  
   if(!options || !options.secret) throw Error("Satr: secret is required.");
   
   const opts = buildOptions(options);
   if( !options.cookie ) options.cookie = {};
   const cookieOpts = buildCookieAttributes(options.cookie);
-  //console.log("pointer")
   /* if( muneem.context.get("https") === true){
     cookieOpts.secure = true;
   } */
 
-  var SM = new SessionManager(opts,cookieOpts);
+  var SM = new SessionManager(opts);
 
   muneem.addToAsked("getSession", SM.createSession );
 
@@ -204,9 +190,9 @@ plugin.prototype.manager = function(muneem, options){
       }
       cookieOpts.expires = new Date(session.birthTime + session.life);
       var encryptedId = cookieSignature.sign(session.id, opts.secret);
-      console.log(session.id, encryptedId);
       answer.cookie( cookieParser.serialize( opts.name, encryptedId, cookieOpts) );
       opts.store.set(session.id, session);
+      eventEmitter.emit("save", session, asked);
     }
   });
 }

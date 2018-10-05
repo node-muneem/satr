@@ -1,6 +1,6 @@
 function Session(id,life){
     this.id = id;
-    this.life = (life || 3600)*1000;
+    this.life = life || 3600000;//in milli-seconds
     this.birthTime = Date.now();
     //this.lastAccessTime;
     //this.state = data.state; //for future use

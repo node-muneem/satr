@@ -8,7 +8,7 @@ const chai = require('chai')
 , chaiHttp = require('chai-http')
 , expected = require('chai').expect;
 
-//process.env.NODE_ENV = "dev";
+process.env.NODE_ENV = "dev";
 
 chai.use(chaiHttp);
 
@@ -22,7 +22,7 @@ const satr = new Satr();
     
 
     satr.on('create', (session, asked) => {
-        //console.log("Session:" + session.id + " has been created for " + asked.path);
+        console.log("Creating a new session");
         console.log( JSON.stringify(session,null,4) );
         console.log( store.get(session.id) );
     })
@@ -33,40 +33,38 @@ const satr = new Satr();
     }) */
     
     satr.on('renew', (session, asked) => {
-        //console.log("Session:" + session.id + " has been renewed for " + asked.path);
+        console.log("Renewing an old session");
         console.log( JSON.stringify(session,null,4) );
         console.log( store.get(session.id) );
     })
     satr.on('invalid', (sessionId, asked) => {
-        console.log("Session:" + sessionId + " is invalid for " + asked.path);
+        console.log("Received an invalid session");
+    })
+    satr.on('save', (sessionId, asked) => {
+        console.log("saved session into cookies and store");
     })
 
     const app = Muneem();
     
     app.use(satr.manager, {
-        autoCreate : true,
+        autoCreate : false,
         secret : "keep it secret and complex that no one can guess",
-        life : 5,
-        store : store
+        life : 600,
+        renewalDuration : 1,//duration before session end when session-id can be renewed
+        store : store,
+        cookie : {
+            httpOnly : true,
+            secure : false
+        }
     });
 
     function authentication(asked, answer, giveMe){
         const session = asked.getSession(); //current session if exist otherwise new unauthorized session
-        if( session.isAuthorized() ){
-            // when session-id is not present in request
-            // if autoCreate : true then session.isAuthorized() is false;
-            // if autoCreate : false then session.isAuthorized() is undefined;
-    
-            // when session-id is present in request but not authorized
-            // if autoCreate : true then session.isAuthorized() is false;
-            // if autoCreate : false then session.isAuthorized() is false;
-    
-            // when session-id is present in request and authorized
-            // if autoCreate : true then session.isAuthorized() is true;
-            // if autoCreate : false then session.isAuthorized() is true;
-    
+        if( session.authorized ){
+            console.log("It is authorized")
         }else{
-            answer.redirectTo("/login/page");
+            asked.hasSession = false; //it'll stop saving the temporary session to the store and cookies
+            answer.redirectTo("/login?sendTo=" + asked.path);
         }
     }
     
@@ -75,11 +73,12 @@ const satr = new Satr();
         //if( authInfo.isValid() ){
             var session = asked.getSession();
             session.authorized = true;
-            session.data.userid  = "authInfo.id";
+            /* session.data.userid  = "authInfo.id";
             session.delete( "tempid");
-            session.add( "userid", "authInfo.id2" );
+            session.add( "userid", "authInfo.id2" ); */
 
-            //answer.redirectTo( asked.queryParam.sendTo || "/" );
+            console.log( asked.queryStr);
+            answer.redirectTo( "/private/url" );
         /* }else{
             answer.writeJson({ result : "fail"});
         } */

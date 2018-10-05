@@ -15,8 +15,14 @@ function SessionManager(options){
   this.createSession = function(){
     const asked = this;
     if(asked._session) return asked._session;
-    var cookies = cookieParser.parse( asked.cookie() );
-    var sessionId = cookies[ options.name ] || asked.headers[ options.name ];
+    var sessionId = "";
+    if( asked.cookie() ){
+      var cookies = cookieParser.parse( asked.cookie() );
+      sessionId = cookies[ options.name ];
+    }else{
+      sessionId = asked.headers[ options.name ];
+    }
+    
     
     //A session-id is not expected once it's cookie has been expired.
     //So the expiry time for auth session cookies should be longer.

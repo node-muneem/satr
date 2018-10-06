@@ -125,12 +125,14 @@ If *autoCreate* option is set to *true*, this plugin will create session for eac
 
 * A session-id is not expected once it's cookie has been expired. So the expiry time for auth session cookies should be longer for good user experience.
 * Short session life is an overhead on server (session store). But long life lure the hackers
-
+* To save users from middle-man attack use HTTPS connections with *secure* cookies.
+* Keeping high number of sessions' data in memory may lead memory leak. So better to use some session-store in prod and performance.
 
 ## Useful links
 
 * [Session_Management_Cheat_Sheet](https://www.owasp.org/index.php/Session_Management_Cheat_Sheet)
 * [Cookies in RESTful webservices](https://softwareengineering.stackexchange.com/questions/141019/should-cookies-be-used-in-a-restful-api#141434)
+* [Cookies based authentication](https://stackoverflow.com/questions/17769011/how-does-cookie-based-authentication-work)
 
 ## TODO
 
